@@ -2,6 +2,7 @@ package response
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/KaliYugaSurfingClub/errs/errs"
 	"log/slog"
 	"net/http"
@@ -33,11 +34,24 @@ func Ok(w http.ResponseWriter, data any) {
 	w.Write(respJson)
 }
 
-func Error(w http.ResponseWriter, log *slog.Logger, err *errs.Error) {
+func Error(w http.ResponseWriter, log *slog.Logger, err error) {
+	var e *errs.Error
+
+	switch {
+	case err == nil:
+		nilErrorResponse(w, log)
+	case !errors.As(err, &e):
+		unknownErrorResponse(w, log, err)
+	default:
+		defaultErrorResponse(w, log, e)
+	}
+}
+
+func defaultErrorResponse(w http.ResponseWriter, log *slog.Logger, err *errs.Error) {
 	httpStatusCode := httpErrorStatusCode(err.Kind)
 
 	log.Error(
-		"errorResponse:",
+		"error response:",
 		slog.Any("stack", errs.OpStack(err)),
 		slog.String("msg", err.Error()),
 		slog.String("kind", err.Kind.String()),
@@ -50,6 +64,30 @@ func Error(w http.ResponseWriter, log *slog.Logger, err *errs.Error) {
 	errJSON, _ := json.Marshal(resp)
 
 	w.WriteHeader(httpStatusCode)
+	w.Write(errJSON)
+}
+
+func nilErrorResponse(w http.ResponseWriter, log *slog.Logger) {
+	log.Error(
+		"Unanticipated nil error - no response body sent",
+		slog.Int("HTTP Error StatusCode", http.StatusInternalServerError),
+	)
+
+	w.WriteHeader(http.StatusInternalServerError)
+}
+
+func unknownErrorResponse(w http.ResponseWriter, log *slog.Logger, err error) {
+	resp := response{
+		Error: errorResponse{
+			Code: errs.Unanticipated.String(),
+		},
+	}
+
+	log.Error("Unknown Error", slog.String("msg", err.Error()))
+
+	errJSON, _ := json.Marshal(resp)
+
+	w.WriteHeader(http.StatusInternalServerError)
 	w.Write(errJSON)
 }
 
@@ -74,10 +112,16 @@ func newErrResponse(err *errs.Error) response {
 			},
 		}
 	default:
+		code := string(err.Code)
+
+		if code == "" {
+			code = err.Kind.String()
+		}
+
 		return response{
 			Status: statusError,
 			Error: errorResponse{
-				Code: string(err.Code),
+				Code: code,
 			},
 		}
 	}
