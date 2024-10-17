@@ -232,3 +232,15 @@ func (k Kind) String() string {
 		return "unknown error kind"
 	}
 }
+
+func KindIs(err error, kind Kind) bool {
+	var e *Error
+
+	if errors.As(err, &e) {
+		if e.Kind != Other {
+			return e.Kind == kind
+		}
+	}
+
+	return false
+}
