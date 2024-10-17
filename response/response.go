@@ -112,16 +112,10 @@ func newErrResponse(err *errs.Error) response {
 			},
 		}
 	default:
-		code := string(err.Code)
-
-		if code == "" {
-			code = err.Kind.String()
-		}
-
 		return response{
 			Status: statusError,
 			Error: errorResponse{
-				Code: code,
+				Code: err.Error(),
 			},
 		}
 	}
