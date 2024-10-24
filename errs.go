@@ -120,27 +120,27 @@ func E(args ...interface{}) error {
 	}
 
 	for _, arg := range args {
-		switch arg := arg.(type) {
+		switch a := arg.(type) {
 		case Op:
-			e.Op = arg
+			e.Op = a
 		case error:
 			if arg == nil {
 				return nil
 			}
-			e.Err = arg
+			e.Err = a
 		case string:
-			e.Err = errors.New(arg)
+			e.Err = errors.New(a)
 		case Kind:
-			e.Kind = arg
+			e.Kind = a
 		case UserName:
-			e.User = arg
+			e.User = a
 		case Code:
-			e.Code = arg
+			e.Code = a
 		case Parameter:
-			e.Param = arg
+			e.Param = a
 		default:
 			_, file, line, _ := runtime.Caller(1)
-			return fmt.Errorf("errors.E: bad call from %s:%d: %v, unknown type %T, value %v in error call", file, line, args, arg, arg)
+			return fmt.Errorf("errors.E: bad call from %s:%d: %v, unknown type %T, value %v in error call", file, line, args, a, a)
 		}
 	}
 
