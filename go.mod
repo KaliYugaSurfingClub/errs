@@ -1,3 +1,3 @@
-module github.com/KaliYugaSurfingClub/errs
+module errs
 
 go 1.23.0
