@@ -7,6 +7,9 @@ import (
 	"slices"
 )
 
+//todo add internal for lib Error type instead panic
+//todo git tree
+
 // Kinds of errors.
 //
 // The values of the error kinds are common between both
@@ -124,9 +127,6 @@ func E(args ...interface{}) error {
 		case Op:
 			e.Op = a
 		case error:
-			if arg == nil {
-				return nil
-			}
 			e.Err = a
 		case string:
 			e.Err = errors.New(a)
